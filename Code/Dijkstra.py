@@ -46,7 +46,7 @@ class Dijkstra:
         self.start_state = start_state
         self.goal_state = goal_state
         self.occupancy_grid = occupancy_grid
-        self.actions = np.array([[0, 1, 1],
+        self.actions = np.int16([[0, 1, 1],
                                  [0, -1, 1],
                                  [-1, 0, 1],
                                  [1, 0, 1],
@@ -64,12 +64,13 @@ class Dijkstra:
         self.path = None
 
         print("\nInitialized Dijkstra...\n")
-        print("\nInitial State: \n", self.start_node.state)
-        print("\nGoal State: \n", self.goal_node.state)
+        print("Initial State: \n", self.start_node.state)
+        print("Goal State: \n", self.goal_node.state)
 
 
     def in_collision(self, pos: np.array) -> bool:
-        if(pos[0] >= 0 and pos[0] < self.occupancy_grid.shape[0] and pos[1] >= 0 and pos[1] < self.occupancy_grid.shape[1]):
+        # print(pos, self.occupancy_grid.shape)
+        if(pos[0] < 0 and pos[0] >= self.occupancy_grid.shape[0] and pos[1] < 0 and pos[1] >= self.occupancy_grid.shape[1]):
             # print("Node out of bounds!")
             return True
         elif(self.occupancy_grid[pos[0],pos[1]]):
@@ -78,13 +79,16 @@ class Dijkstra:
         else:
             return False
 
+    def to_tuple(self, state: np.array) -> tuple:
+        return tuple(map(tuple, state))
+
     def search(self) -> bool:
 
         print("\nStarting search...\n")
 
         pq = PriorityQueue()
 
-        pq.put(self.start_node.cost, self.start_node.state)
+        pq.put((self.start_node.cost, self.start_node.state))
         self.open_list[self.start_node.state] = self.start_node
 
         tick = time.time()
@@ -94,7 +98,7 @@ class Dijkstra:
             self.closed_list[current_node.state] = current_node
             del self.open_list[current_node.state]
 
-            if(current_node.state == goal_state.state):
+            if(current_node.state == self.goal_node.state):
                 print("GOAL REACHED!")
                 toc = time.time()
                 print("Took %.03f seconds to search the path"%((toc-tick)))
@@ -103,10 +107,11 @@ class Dijkstra:
 
             actions = self.actions
             for action in range(len(actions)):
-                new_state = current_node.state + actions[action][:2]
-                new_index = self.current_index - 1
+                new_state = (current_node.state + actions[action][:2])
+                new_state = (new_state[0], new_state[1])
+                new_index = self.current_index + 1
                 self.current_index = new_index
-                if(not in_collision(new_state)):
+                if(not self.in_collision(new_state)):
                     new_node = Node(new_state, actions[action][2], new_index, current_node.index)
 
                     if(new_state in self.closed_list):
@@ -115,8 +120,10 @@ class Dijkstra:
 
                     if(new_state not in self.open_list):
                         self.open_list[new_state] = new_node
+                        pq.put((new_node.cost, new_node.state))
                     else:
                         if(self.open_list[new_state].cost > new_node.cost):
+                            # self.current_index -= 1
                             self.open_list[new_state] = new_node
                 else:
                     # print("NODE IN COLLISION!")
@@ -130,14 +137,11 @@ def main():
 
     Parser = argparse.ArgumentParser()
     Parser.add_argument('--StartState', type=str, default="(5,5)", help='Start state of the robot')
-    Parser.add_argument('--GoalState', type=str, default="(180, 350)", help='Goal state of the robot')
+    Parser.add_argument('--GoalState', type=str, default="(50, 70)", help='Goal state of the robot')
 
     Args = Parser.parse_args()
     StartState = tuple(map(int, Args.StartState.replace('(', ' ').replace(')', ' ').replace(',', ' ').split()))
     GoalState = tuple(map(int, Args.GoalState.replace('(', ' ').replace(')', ' ').replace(',', ' ').split()))
-
-    print(StartState, GoalState)
-
 
     m = Map(400,250)
     c = Circle(40, 40, 40)
