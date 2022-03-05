@@ -28,6 +28,7 @@ class Map():
 
 	def generate_map(self) -> None:
 		c = Circle(300, 185, 40)
+		print(c)
 		circle = c.generate_circle(self.xx, self.yy)
 		self.occupancy_grid += circle
 
@@ -54,11 +55,24 @@ class Circle():
 		self.y = y
 		self.radius = radius
 
+	def __str__(self) -> str:
+		return "Circle of radius {self.radius} with center ({self.x}, {self.y})"
+
 	def generate_circle(self, xx, yy) -> np.array:
 		occupancy_grid = np.logical_and(True, (((xx - self.x) ** 2 + (yy - self.y) ** 2) <= self.radius**2))
 		occupancy_grid[occupancy_grid == True] = 1
 
 		return occupancy_grid
+
+
+# class Polygon():
+
+# 	def __init__(self, points: list) -> None:
+# 		self.points = points
+
+# 	def generate_polygon(self) -> np.array:
+
+
 
 def main():
 	m = Map(400,250)
