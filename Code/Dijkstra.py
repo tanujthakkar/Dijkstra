@@ -77,7 +77,8 @@ class Dijkstra:
         self.search_cost = 0.0
         self.occupancy_grid_ = None
 
-        self.video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc('F','M','P','4'), 24, (self.occupancy_grid.shape[0], self.occupancy_grid.shape[1]))
+        if(self.visualize):
+            self.video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc('F','M','P','4'), 24, (self.occupancy_grid.shape[0], self.occupancy_grid.shape[1]))
 
         print("\nInitialized Dijkstra...\n")
         print("Initial State: \n", self.start_node.state)
@@ -139,7 +140,8 @@ class Dijkstra:
                 toc = time.time()
                 # print("Took %.03f seconds to search the path"%((toc-tick)))
                 self.final_node = current_node
-                self.occupancy_grid_ = occupancy_grid
+                if(self.visualize):
+                    self.occupancy_grid_ = occupancy_grid
                 self.search_cost = current_node.cost
                 return True
 
@@ -194,20 +196,20 @@ class Dijkstra:
         self.occupancy_grid_ = cv2.circle(self.occupancy_grid_, (self.start_state[0], self.occupancy_grid.shape[1] - self.start_state[1]), 2, (0, 255, 0), 2)
         self.occupancy_grid_ = cv2.circle(self.occupancy_grid_, (self.goal_state[0], self.occupancy_grid.shape[1] - self.goal_state[1]), 2, (0, 0, 255), 2)
         
-        for step in range(len(self.path)-1):
-            self.occupancy_grid_ = cv2.line(self.occupancy_grid_, (self.path[step,0], self.occupancy_grid.shape[1] - self.path[step,1]), (self.path[step+1,0], self.occupancy_grid.shape[1] - self.path[step+1,1]), (0,0,255), 2)
-            cv2.imshow("Dijkstra", self.occupancy_grid_)
-            self.video.write(np.uint8(self.occupancy_grid_))
-            cv2.waitKey(1)
-        cv2.waitKey(0)
+        if(self.visualize):
+            for step in range(len(self.path)-1):
+                self.occupancy_grid_ = cv2.line(self.occupancy_grid_, (self.path[step,0], self.occupancy_grid.shape[1] - self.path[step,1]), (self.path[step+1,0], self.occupancy_grid.shape[1] - self.path[step+1,1]), (0,0,255), 2)
+                cv2.imshow("Dijkstra", self.occupancy_grid_)
+                self.video.write(np.uint8(self.occupancy_grid_))
+                cv2.waitKey(1)
+            cv2.waitKey(0)
 
-        cv2.destroyAllWindows()
-        self.video.release()
+            cv2.destroyAllWindows()
+            self.video.release()
 
         print("BACKTRACKING PATH COMPLETE!")
         print("Dijkstra Path Length: {}".format(self.search_cost))
         return self.path
-
 
 def main():
 
