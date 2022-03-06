@@ -31,7 +31,7 @@ Instructions -
           |- Test_Case_2
           |- ReadMe.md
 
-2. Run the terminal from the "Project2_Tanuj_Thakkar/Code" folder
+2. Run the terminal from the "Project2_Tanuj_Thakkar" folder
 
 3. To run the code for Dijkstra-pathplanning-Tanuj-Thakkar.py, use the following command -
 
@@ -40,6 +40,8 @@ Instructions -
     Use --StartState to specift start state
     Use --GoalState to specift goal state
     Use --Visalize to toggle visualization (It'll save a video as 'vidoe.avi')
+
+4. Here is the GitHub repository of the project - https://github.com/tanujthakkar/Dijkstra
 
 Please reach out to me if you face any issues running the code.
 
