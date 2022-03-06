@@ -31,33 +31,17 @@ class Map():
         circle = c.get_points_inside(self.xx, self.yy, 0)
         self.occupancy_grid += circle
 
-        # c = Circle(300, 185, 40)
-        # clearance = c.get_points_inside(self.xx, self.yy, 5)
-        # self.occupancy_grid += clearance
-
         h = Hexagon([(165,120.20), (200,140.41), (235,120.20), (235,79.8), (200,59.58), (165,79.8), (165,120.20)])
         hexagon = h.get_points_inside(self.xx, self.yy, 0)
-        self.occupancy_grid += hexagon 
-
-        # h = Hexagon([(165,120.20), (200,140.41), (235,120.20), (235,79.8), (200,59.58), (165,79.8), (165,120.20)])
-        # hexagon = h.get_points_inside(self.xx, self.yy, 5)
-        # self.occupancy_grid += hexagon        
+        self.occupancy_grid += hexagon        
 
         t1 = Triangle1([(36,185), (105,100), (80,180), (36,185)])
         t1_ = t1.get_points_inside(self.xx, self.yy, 0)
         self.occupancy_grid += t1_
 
-        # t1 = Triangle1([(36,185), (105,100), (80,180), (36,185)])
-        # t1_ = t1.get_points_inside(self.xx, self.yy, 5)
-        # self.occupancy_grid += t1_
-
         t2 = Triangle2([(36,185), (80,180), (115,210), (36,185)])
         t2_ = t2.get_points_inside(self.xx, self.yy, 0)
         self.occupancy_grid += t2_
-
-        # t2 = Triangle2([(36,185), (80,180), (115,210), (36,185)])
-        # t2_ = t2.get_points_inside(self.xx, self.yy, 5)
-        # self.occupancy_grid += t2_
 
         self.occupancy_grid[:2] = -1
         self.occupancy_grid[:,:2] = -1
@@ -67,12 +51,6 @@ class Map():
         self.occupancy_grid[self.occupancy_grid==0] = 255
         self.occupancy_grid[self.occupancy_grid==-1] = 0
         self.occupancy_grid[self.occupancy_grid==1] = 0
-        self.occupancy_grid[self.occupancy_grid==2] = 125
-
-        # plt.plot(np.where(self.occupancy_grid==-1)[0], np.where(self.occupancy_grid==-1)[1], 'ks')
-        # plt.plot(np.where(self.occupancy_grid==1)[0], np.where(self.occupancy_grid==1)[1], '.')
-        # plt.plot(np.where(self.occupancy_grid==2)[0], np.where(self.occupancy_grid==2)[1], '.k')
-        # plt.show()
 
         # cv2.imshow("", np.flip(np.uint8(self.occupancy_grid).transpose(), axis=0))
         # cv2.waitKey(0)
@@ -91,7 +69,7 @@ class Circle():
 
     def get_points_inside(self, xx: np.array, yy: np.array, clearance: int) -> np.array:
         occupancy_grid = np.logical_and(True, (((xx - self.x) ** 2 + (yy - self.y) ** 2) <= (self.radius + clearance)**2))
-        # occupancy_grid[occupancy_grid == True] = 1
+        occupancy_grid[occupancy_grid == True] = 1
 
         return occupancy_grid
 
@@ -136,6 +114,7 @@ class Triangle1():
         t1 = np.logical_and((yy + clearance >= ((self.m[0]*xx) + self.c[0])), (yy + clearance <= ((self.m[1]*xx) + self.c[1])))
         t2 = np.logical_and(t1, (yy + clearance <= ((self.m[2]*xx) + self.c[2])))
         occupancy_grid = np.logical_and(t1, t2)
+        occupancy_grid[occupancy_grid == True] = 1
 
         return occupancy_grid
 
@@ -159,6 +138,7 @@ class Triangle2():
         t1 = np.logical_and((yy + clearance >= ((self.m[0]*xx) + self.c[0])), (yy + clearance >= ((self.m[1]*xx) + self.c[1])))
         t2 = np.logical_and(t1, (yy + clearance <= ((self.m[2]*xx) + self.c[2])))
         occupancy_grid = np.logical_and(t1, t2)
+        occupancy_grid[occupancy_grid == True] = 1
 
         return occupancy_grid
 
@@ -185,6 +165,7 @@ class Hexagon():
         l = np.logical_and(l, (yy + clearance >= ((self.m[4]*xx) + self.c[4])))
         l = np.logical_and(l, (xx + clearance <= 235))
         occupancy_grid = np.logical_and(True, l)
+        occupancy_grid[occupancy_grid == True] = 1
 
         return occupancy_grid
 
