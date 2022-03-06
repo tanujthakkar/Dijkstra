@@ -46,10 +46,10 @@ class Dijkstra:
         self.start_state = start_state
         self.goal_state = goal_state
         self.occupancy_grid = occupancy_grid
-        self.actions = np.array([[0, 1, 1],
-                                 [0, -1, 1],
-                                 [-1, 0, 1],
+        self.actions = np.array([[-1, 0, 1],
                                  [1, 0, 1],
+                                 [0, 1, 1],
+                                 [0, -1, 1],
                                  [-1, 1, np.sqrt(2)],
                                  [-1, -1, np.sqrt(2)],
                                  [1, 1, np.sqrt(2)],
@@ -63,6 +63,13 @@ class Dijkstra:
         self.final_node = None
         self.path = None
         self.visualize = visualize
+        self.iterations = 0
+        self.nodes = 0
+        self.search_cost = 0.0
+        self.occupancy_grid_ = None
+
+        self.video = cv2.VideoWriter('video.mp4', cv2.VideoWriter_fourcc(*'DIVX'), 24, (self.occupancy_grid.shape[1], self.occupancy_grid.shape[0]))
+
 
         print("\nInitialized Dijkstra...\n")
         print("Initial State: \n", self.start_node.state)
@@ -95,32 +102,37 @@ class Dijkstra:
         self.open_list[self.start_node.state] = (self.start_node.index, self.start_node)
 
         if(self.visualize):
-            occupancy_grid = np.copy(self.occupancy_grid)
-            # plt.plot(np.where(self.occupancy_grid==-1)[0], np.where(self.occupancy_grid==-1)[1], 'ks')
-            # plt.plot(np.where(self.occupancy_grid==1)[0], np.where(self.occupancy_grid==1)[1], '.')
-            # plt.plot(np.where(self.occupancy_grid>1)[0], np.where(self.occupancy_grid>1)[1], '.k')
-            # plt.plot(self.start_state[0], self.start_state[1], 'og')
-            # plt.plot(self.goal_state[0], self.goal_state[1], 'xb')
-            cv2.imshow("Dijkstra", np.flip(np.uint8(occupancy_grid).transpose(), axis=0))
+            occupancy_grid = np.uint8(np.copy(self.occupancy_grid))
+            occupancy_grid = cv2.cvtColor(np.flip(np.uint8(occupancy_grid).transpose(), axis=0), cv2.COLOR_GRAY2BGR)
+            occupancy_grid = cv2.circle(occupancy_grid, (self.start_state[0], self.occupancy_grid.shape[1] - self.start_state[1]), 2, (0, 255, 0), 2)
+            occupancy_grid = cv2.circle(occupancy_grid, (self.goal_state[0], self.occupancy_grid.shape[1] - self.goal_state[1]), 2, (0, 0, 255), 2)
+            self.video.write(np.uint8(occupancy_grid))
+            cv2.imshow("Dijkstra", occupancy_grid)
             cv2.waitKey(0)
 
         tick = time.time()
         while(not pq.empty()):
+
+            self.iterations += 1
 
             current_node = self.open_list[pq.get()[1]][1]
             self.closed_list[current_node.state] = (current_node.index, current_node)
             del self.open_list[current_node.state]
 
             if(self.visualize):
-                occupancy_grid[int(current_node.state[0]), int(current_node.state[1])] = 0
-                cv2.imshow("Dijkstra", np.flip(np.uint8(occupancy_grid).transpose(), axis=0))
-                cv2.waitKey(1)
+                occupancy_grid[self.occupancy_grid.shape[1] - int(current_node.state[1]), int(current_node.state[0])] = (242, 133, 65)
+                if(self.iterations%20 == 0):
+                    self.video.write(np.uint8(occupancy_grid))
+                    cv2.imshow("Dijkstra", occupancy_grid)
+                    cv2.waitKey(1)
 
             if(current_node.state == self.goal_node.state):
                 print("GOAL REACHED!")
                 toc = time.time()
                 print("Took %.03f seconds to search the path"%((toc-tick)))
                 self.final_node = current_node
+                self.occupancy_grid_ = occupancy_grid
+                self.search_cost = current_node.cost
                 return True
 
             actions = self.actions
@@ -129,7 +141,7 @@ class Dijkstra:
                 new_index = self.current_index + 1
                 new_cost = current_node.cost + actions[action][2]
                 self.current_index = new_index
-                if(not self.in_collision(new_state, 4)):
+                if(not self.in_collision(new_state, 0)):
                     new_node = Node(new_state, new_cost, new_index, current_node.index)
 
                     if(new_state in self.closed_list):
@@ -144,6 +156,8 @@ class Dijkstra:
                             self.open_list[new_state] = (new_node.index, new_node)
                         else:
                             self.current_index -= 1
+
+                    self.nodes += 1
                 else:
                     self.current_index -= 1
                     # print("NODE IN COLLISION!")
@@ -167,22 +181,24 @@ class Dijkstra:
 
         self.path.append(self.start_node.state)
         self.path.reverse()
-        self.path = np.array(self.path)
+        self.path = np.array(self.path).astype(int)
 
-        plt.plot(self.path[:,0], self.path[:,1], '-r')
-        plt.plot(self.start_state[0], self.start_state[1], 'og')
-        plt.plot(self.goal_state[0], self.goal_state[1], 'xb')
-        plt.plot(np.where(self.occupancy_grid==-1)[0], np.where(self.occupancy_grid==-1)[1], 'ks', markersize=0.5)
-        plt.plot(np.where(self.occupancy_grid==1)[0], np.where(self.occupancy_grid==1)[1], '.', markersize=0.5)
-        plt.plot(np.where(self.occupancy_grid>1)[0], np.where(self.occupancy_grid>1)[1], '.k', markersize=0.5)
-        plt.show()
+        self.occupancy_grid_ = cv2.circle(self.occupancy_grid_, (self.start_state[0], self.occupancy_grid.shape[1] - self.start_state[1]), 2, (0, 255, 0), 2)
+        self.occupancy_grid_ = cv2.circle(self.occupancy_grid_, (self.goal_state[0], self.occupancy_grid.shape[1] - self.goal_state[1]), 2, (0, 0, 255), 2)
+        
+        for step in range(len(self.path)-1):
+            self.occupancy_grid_ = cv2.line(self.occupancy_grid_, (self.path[step,0], self.occupancy_grid.shape[1] - self.path[step,1]), (self.path[step+1,0], self.occupancy_grid.shape[1] - self.path[step+1,1]), (0,0,255), 2)
+            cv2.imshow("Dijkstra", self.occupancy_grid_)
+            self.video.write(np.uint8(self.occupancy_grid_))
+            cv2.waitKey(1)
+        cv2.waitKey(0)
+
+        cv2.destroyAllWindows()
+        self.video.release()
 
         print("BACKTRACKING PATH COMPLETE!")
+        print("Dijkstra Path Length: {}".format(self.search_cost))
         return self.path
-
-# def random_search() -> tuple, tuple:
-#     np.random.randint()
-
 
 def main():
 
