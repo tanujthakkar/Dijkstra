@@ -43,9 +43,18 @@ class Node():
 class Dijkstra:
 
     def __init__(self, start_state: tuple, goal_state: tuple, occupancy_grid:  np.array, visualize: bool) -> None:
+        self.valid = True
         self.start_state = start_state
         self.goal_state = goal_state
         self.occupancy_grid = occupancy_grid
+        if(self.in_collision(start_state, 5)):
+            print("INVALID START STATE!")
+            self.valid = False
+            return
+        if(self.in_collision(goal_state, 5)):
+            print("INVALID GOAL STATE!")
+            self.valid = False
+            return
         self.actions = np.array([[-1, 0, 1],
                                  [1, 0, 1],
                                  [0, 1, 1],
@@ -68,8 +77,7 @@ class Dijkstra:
         self.search_cost = 0.0
         self.occupancy_grid_ = None
 
-        self.video = cv2.VideoWriter('video.mp4', cv2.VideoWriter_fourcc(*'DIVX'), 24, (self.occupancy_grid.shape[1], self.occupancy_grid.shape[0]))
-
+        self.video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc('F','M','P','4'), 24, (self.occupancy_grid.shape[0], self.occupancy_grid.shape[1]))
 
         print("\nInitialized Dijkstra...\n")
         print("Initial State: \n", self.start_node.state)
@@ -129,7 +137,7 @@ class Dijkstra:
             if(current_node.state == self.goal_node.state):
                 print("GOAL REACHED!")
                 toc = time.time()
-                print("Took %.03f seconds to search the path"%((toc-tick)))
+                # print("Took %.03f seconds to search the path"%((toc-tick)))
                 self.final_node = current_node
                 self.occupancy_grid_ = occupancy_grid
                 self.search_cost = current_node.cost
@@ -141,7 +149,7 @@ class Dijkstra:
                 new_index = self.current_index + 1
                 new_cost = current_node.cost + actions[action][2]
                 self.current_index = new_index
-                if(not self.in_collision(new_state, 0)):
+                if(not self.in_collision(new_state, 5)):
                     new_node = Node(new_state, new_cost, new_index, current_node.index)
 
                     if(new_state in self.closed_list):
@@ -200,6 +208,7 @@ class Dijkstra:
         print("Dijkstra Path Length: {}".format(self.search_cost))
         return self.path
 
+
 def main():
 
     Parser = argparse.ArgumentParser()
@@ -218,8 +227,9 @@ def main():
     m.generate_map()
 
     D = Dijkstra(StartState, GoalState, m.occupancy_grid, Visualize)
-    if(D.search()):
-        D.backtrack_path()
+    if(D.valid):
+        if(D.search()):
+            D.backtrack_path()
 
 if __name__ == '__main__':
     main()
