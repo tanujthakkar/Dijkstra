@@ -42,16 +42,16 @@ class Node():
 
 class Dijkstra:
 
-    def __init__(self, start_state: tuple, goal_state: tuple, occupancy_grid:  np.array, visualize: bool) -> None:
+    def __init__(self, start_state: tuple, goal_state: tuple, occupancy_grid:  np.array, tolerance: int = 0, visualize: bool = False) -> None:
         self.valid = True
         self.start_state = start_state
         self.goal_state = goal_state
         self.occupancy_grid = occupancy_grid
-        if(self.in_collision(start_state, 5)):
+        if(self.in_collision(start_state, 0)):
             print("INVALID START STATE!")
             self.valid = False
             return
-        if(self.in_collision(goal_state, 5)):
+        if(self.in_collision(goal_state, 0)):
             print("INVALID GOAL STATE!")
             self.valid = False
             return
@@ -71,6 +71,7 @@ class Dijkstra:
         self.closed_list = dict()
         self.final_node = None
         self.path = None
+        self.tolerance = tolerance
         self.visualize = visualize
         self.iterations = 0
         self.nodes = 0
@@ -86,8 +87,8 @@ class Dijkstra:
 
 
     def in_collision(self, pos: np.array, clearance: int) -> bool:
-        X, Y = np.ogrid[int(pos[0]) - clearance:int(pos[0]) + clearance, int(pos[1]) - clearance:int(pos[1]) + clearance]
-        if(pos[0] < 0 and pos[0] >= self.occupancy_grid.shape[0] and pos[1] < 0 and pos[1] >= self.occupancy_grid.shape[1]):
+        X, Y = np.ogrid[max(0, int(pos[0]) - clearance):min(self.occupancy_grid.shape[0]-4, int(pos[0]) + clearance), max(0, int(pos[1]) - clearance):min(self.occupancy_grid.shape[1]-4, int(pos[1]) + clearance)]
+        if(pos[0] < 0 or pos[0] >= self.occupancy_grid.shape[0] or pos[1] < 0 or pos[1] >= self.occupancy_grid.shape[1]):
             # print("Node out of bounds!")
             return True
         elif(not self.occupancy_grid[int(pos[0]),int(pos[1])]):
@@ -113,6 +114,8 @@ class Dijkstra:
         if(self.visualize):
             occupancy_grid = np.uint8(np.copy(self.occupancy_grid))
             occupancy_grid = cv2.cvtColor(np.flip(np.uint8(occupancy_grid).transpose(), axis=0), cv2.COLOR_GRAY2BGR)
+            print("self: ", self.occupancy_grid.shape)
+            print("occupancy_grid: ", occupancy_grid.shape)
             occupancy_grid = cv2.circle(occupancy_grid, (self.start_state[0], self.occupancy_grid.shape[1] - self.start_state[1]), 2, (0, 255, 0), 2)
             occupancy_grid = cv2.circle(occupancy_grid, (self.goal_state[0], self.occupancy_grid.shape[1] - self.goal_state[1]), 2, (0, 0, 255), 2)
             self.video.write(np.uint8(occupancy_grid))
@@ -128,12 +131,12 @@ class Dijkstra:
             self.closed_list[current_node.state] = (current_node.index, current_node)
             del self.open_list[current_node.state]
 
-            if(self.visualize):
-                occupancy_grid[self.occupancy_grid.shape[1] - int(current_node.state[1]), int(current_node.state[0])] = (242, 133, 65)
-                if(self.iterations%20 == 0):
-                    self.video.write(np.uint8(occupancy_grid))
-                    cv2.imshow("Dijkstra", occupancy_grid)
-                    cv2.waitKey(1)
+            # if(self.visualize):
+            #     occupancy_grid[self.occupancy_grid.shape[1] - int(current_node.state[1]), int(current_node.state[0])] = (242, 133, 65)
+            #     if(self.iterations%20 == 0):
+            #         self.video.write(np.uint8(occupancy_grid))
+            #         cv2.imshow("Dijkstra", occupancy_grid)
+            #         cv2.waitKey(1)
 
             if(current_node.state == self.goal_node.state):
                 print("GOAL REACHED!")
@@ -151,7 +154,7 @@ class Dijkstra:
                 new_index = self.current_index + 1
                 new_cost = current_node.cost + actions[action][2]
                 self.current_index = new_index
-                if(not self.in_collision(new_state, 5)):
+                if(not self.in_collision(new_state, self.tolerance)):
                     new_node = Node(new_state, new_cost, new_index, current_node.index)
 
                     if(new_state in self.closed_list):
@@ -228,7 +231,7 @@ def main():
     m = Map(400,250)
     m.generate_map()
 
-    D = Dijkstra(StartState, GoalState, m.occupancy_grid, Visualize)
+    D = Dijkstra(StartState, GoalState, m.occupancy_grid, 5, Visualize)
     if(D.valid):
         if(D.search()):
             D.backtrack_path()
