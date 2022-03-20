@@ -114,8 +114,6 @@ class Dijkstra:
         if(self.visualize):
             occupancy_grid = np.uint8(np.copy(self.occupancy_grid))
             occupancy_grid = cv2.cvtColor(np.flip(np.uint8(occupancy_grid).transpose(), axis=0), cv2.COLOR_GRAY2BGR)
-            print("self: ", self.occupancy_grid.shape)
-            print("occupancy_grid: ", occupancy_grid.shape)
             occupancy_grid = cv2.circle(occupancy_grid, (self.start_state[0], self.occupancy_grid.shape[1] - self.start_state[1]), 2, (0, 255, 0), 2)
             occupancy_grid = cv2.circle(occupancy_grid, (self.goal_state[0], self.occupancy_grid.shape[1] - self.goal_state[1]), 2, (0, 0, 255), 2)
             self.video.write(np.uint8(occupancy_grid))
@@ -132,10 +130,10 @@ class Dijkstra:
             del self.open_list[current_node.state]
 
             if(self.visualize):
-                temp = self.occupancy_grid.shape[1] - int(current_node.state[1])
-                if(temp == 250):
-                    temp = 1
-                occupancy_grid[temp, int(current_node.state[0])] = (242, 133, 65)
+                row = self.occupancy_grid.shape[1] - int(current_node.state[1])
+                if(row == 250):
+                    row = 249
+                occupancy_grid[row, int(current_node.state[0])] = (242, 133, 65)
                 if(self.iterations%20 == 0):
                     self.video.write(np.uint8(occupancy_grid))
                     cv2.imshow("Dijkstra", occupancy_grid)
