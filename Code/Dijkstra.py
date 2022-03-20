@@ -131,12 +131,15 @@ class Dijkstra:
             self.closed_list[current_node.state] = (current_node.index, current_node)
             del self.open_list[current_node.state]
 
-            # if(self.visualize):
-            #     occupancy_grid[self.occupancy_grid.shape[1] - int(current_node.state[1]), int(current_node.state[0])] = (242, 133, 65)
-            #     if(self.iterations%20 == 0):
-            #         self.video.write(np.uint8(occupancy_grid))
-            #         cv2.imshow("Dijkstra", occupancy_grid)
-            #         cv2.waitKey(1)
+            if(self.visualize):
+                temp = self.occupancy_grid.shape[1] - int(current_node.state[1])
+                if(temp == 250):
+                    temp = 1
+                occupancy_grid[temp, int(current_node.state[0])] = (242, 133, 65)
+                if(self.iterations%20 == 0):
+                    self.video.write(np.uint8(occupancy_grid))
+                    cv2.imshow("Dijkstra", occupancy_grid)
+                    cv2.waitKey(1)
 
             if(current_node.state == self.goal_node.state):
                 print("GOAL REACHED!")
